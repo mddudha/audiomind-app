@@ -12,12 +12,6 @@ final class TranscriptionService {
     private let endpoint = URL(string: "http://10.0.0.105:8000/transcribe")!
 
 
-    private let apiKey: String = {
-        guard let key = Bundle.main.infoDictionary?["OPENAI_API_KEY"] as? String else {
-            fatalError("❌ OPENAI_API_KEY not found in Info.plist")
-        }
-        return key
-    }()
     
     func transcribeAudio(at url: URL, completion: @escaping (Result<String, Error>) -> Void) {
         func attemptTranscription(retryCount: Int = 0) {
