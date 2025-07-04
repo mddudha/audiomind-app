@@ -2,9 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>OPENAI_API_KEY</key>
+	<string>$(OPENAI_API_KEY)</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access in order record audio. </string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsUsageDescription</key>
+		<dict/>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>CFBundleIdentifier</key>
+	<string></string>
 	<key>UIBackgroundModes</key>
+	<dict/>
+	<key>NSBonjourServices</key>
 	<array>
-		<string>audio</string>
+		<string>_http._tcp
+
+_http._tcp
+
+</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>This app requires access to devices on your local network.</string>
 </dict>
 </plist>

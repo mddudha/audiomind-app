@@ -12,7 +12,8 @@ import SwiftData
 struct AudioMindApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            RecordingSession.self,
+            TranscriptionSegment.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -23,9 +24,10 @@ struct AudioMindApp: App {
         }
     }()
 
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RecordingView()
         }
         .modelContainer(sharedModelContainer)
     }
