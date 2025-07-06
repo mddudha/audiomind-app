@@ -25,5 +25,16 @@ _http._tcp
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>This app requires access to devices on your local network.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.mirva.AudioMind</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>audiomind</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -8,10 +8,8 @@
 import Foundation
 
 final class TranscriptionService {
-    
-    private let endpoint = URL(string: "http://10.0.0.105:8000/transcribe")!
-
-
+ 
+      private let endpoint = URL(string: "http://10.0.0.105:8888/transcribe")!
     
     func transcribeAudio(at url: URL, completion: @escaping (Result<String, Error>) -> Void) {
         func attemptTranscription(retryCount: Int = 0) {
@@ -33,6 +31,7 @@ final class TranscriptionService {
             body.append(audioData)
             body.append("\r\n".data(using: .utf8)!)
             body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
             request.httpBody = body
 
             URLSession.shared.dataTask(with: request) { data, response, error in
@@ -80,12 +79,15 @@ final class TranscriptionService {
                 }
             }.resume()
         }
-
         attemptTranscription()
     }
-
-
-//    
+    
+//    // In TranscriptionService.swift
+//
+//    // You currently have this function, which creates the multipart body
+//    // You call this internally now, but it's commented out in your main transcribeAudio.
+//    // Let's ensure the main transcribeAudio function uses the correct filename and mimetype.
+//
 //    func transcribeAudio(at url: URL, completion: @escaping (Result<String, Error>) -> Void) {
 //        var request = URLRequest(url: endpoint)
 //        request.httpMethod = "POST"
@@ -98,13 +100,25 @@ final class TranscriptionService {
 //            return
 //        }
 //
+//        // --- CHANGE STARTS HERE ---
+//        let filename = url.lastPathComponent // Get the actual filename (e.g., UUID.wav)
+//        let mimetype: String
+//        if url.pathExtension.lowercased() == "wav" {
+//            mimetype = "audio/wav"
+//        } else if url.pathExtension.lowercased() == "caf" {
+//            mimetype = "audio/x-caf" // Keep this for robustness if other files are sent
+//        } else {
+//            mimetype = "application/octet-stream" // Generic fallback
+//        }
+//
 //        var body = Data()
 //        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-//        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.caf\"\r\n".data(using: .utf8)!)
-//        body.append("Content-Type: audio/x-caf\r\n\r\n".data(using: .utf8)!)
+//        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+//        body.append("Content-Type: \(mimetype)\r\n\r\n".data(using: .utf8)!)
 //        body.append(audioData)
 //        body.append("\r\n".data(using: .utf8)!)
 //        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+//        // --- CHANGE ENDS HERE ---
 //
 //        request.httpBody = body
 //
@@ -115,6 +129,7 @@ final class TranscriptionService {
 //                return
 //            }
 //
+//            // ... (rest of your existing code for handling data, response, and errors) ...
 //            guard let data = data else {
 //                completion(.failure(NSError(domain: "TranscriptionError", code: -2, userInfo: [NSLocalizedDescriptionKey: "No data received"])))
 //                return
@@ -125,7 +140,9 @@ final class TranscriptionService {
 //                   let text = json["transcript"] as? String {
 //                    completion(.success(text))
 //                } else {
-//                    throw NSError(domain: "TranscriptionError", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+//                    // Add more detailed error info for debugging server response
+//                    let rawResponseString = String(data: data, encoding: .utf8) ?? "Unable to decode response"
+//                    throw NSError(domain: "TranscriptionError", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid response format or missing 'transcript' field. Raw response: \(rawResponseString)"])
 //                }
 //            } catch {
 //                print("❌ JSON parse error: \(error)")
@@ -135,6 +152,11 @@ final class TranscriptionService {
 //        }.resume()
 //    }
 //
+//    // You can remove or keep the private func createMultipartBody if it's not used elsewhere.
+//    // The main transcribeAudio function is now doing the body creation directly.
+//
+//
+
 
     
     private func createMultipartBody(fileURL: URL, boundary: String) -> Data {

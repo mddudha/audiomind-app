@@ -7,6 +7,7 @@
 
 import Foundation
 import AVFoundation
+import Accelerate
 
 final class AudioRecorderService: ObservableObject {
     private var engine: AVAudioEngine!
@@ -23,6 +24,7 @@ final class AudioRecorderService: ObservableObject {
     private let transcriptionService = TranscriptionService()
 
     @Published var isRecording = false
+    @Published var audioLevel: Float = 0.0 // 0.0 (silent) to 1.0 (max)
     
     private var format: AVAudioFormat {
         engine.inputNode.inputFormat(forBus: 0)
@@ -74,9 +76,10 @@ final class AudioRecorderService: ObservableObject {
     }
 
 
+    // In AudioRecorderService.swift
 
     private func flushSegmentToDisk() {
-        print("🧾 Flushing accumulated frames: \(accumulatedFrames)") // Changed from bufferQueue.count
+        print("🧾 Flushing accumulated frames: \(accumulatedFrames)")
 
         guard let bufferToFlush = currentRecordingBuffer, bufferToFlush.frameLength > 0 else {
             print("No frames to flush.")
@@ -87,24 +90,22 @@ final class AudioRecorderService: ObservableObject {
         let segmentURL = FileManager.default.temporaryDirectory.appendingPathComponent(segmentFilename)
 
         do {
-            // Use the format from the buffer itself
             let file = try AVAudioFile(forWriting: segmentURL, settings: bufferToFlush.format.settings)
-
-            try file.write(from: bufferToFlush) // Write the single accumulated buffer
-
+            try file.write(from: bufferToFlush)
             print("✅ Segment saved: \(segmentFilename)")
 
             // Reset the buffer for the next segment *after* writing
             bufferToFlush.frameLength = 0
             accumulatedFrames = 0
-            
+
             // Perform WAV conversion
             convertToWav(sourceURL: segmentURL) { [weak self] wavURL in
                 guard let self = self else { return }
 
-                DispatchQueue.main.async {
+                DispatchQueue.main.async { // Ensure UI updates or subsequent calls are on main thread if needed
                     if let wavURL = wavURL {
                         print("✅ Converted to WAV:", wavURL)
+                        // Call the callback to let the ViewModel handle segment creation and transcription
                         self.onSegmentSaved?(wavURL)
                     } else {
                         print("❌ Failed to convert segment to WAV")
@@ -118,6 +119,51 @@ final class AudioRecorderService: ObservableObject {
             print("❌ Failed to write segment: \(error)")
         }
     }
+    
+//
+//    private func flushSegmentToDisk() {
+//        print("🧾 Flushing accumulated frames: \(accumulatedFrames)") // Changed from bufferQueue.count
+//
+//        guard let bufferToFlush = currentRecordingBuffer, bufferToFlush.frameLength > 0 else {
+//            print("No frames to flush.")
+//            return
+//        }
+//
+//        let segmentFilename = "segment_\(segmentIndex).caf"
+//        let segmentURL = FileManager.default.temporaryDirectory.appendingPathComponent(segmentFilename)
+//
+//        do {
+//            // Use the format from the buffer itself
+//            let file = try AVAudioFile(forWriting: segmentURL, settings: bufferToFlush.format.settings)
+//
+//            try file.write(from: bufferToFlush) // Write the single accumulated buffer
+//
+//            print("✅ Segment saved: \(segmentFilename)")
+//
+//            // Reset the buffer for the next segment *after* writing
+//            bufferToFlush.frameLength = 0
+//            accumulatedFrames = 0
+//
+//            // Perform WAV conversion
+//            convertToWav(sourceURL: segmentURL) { [weak self] wavURL in
+//                guard let self = self else { return }
+//
+//                DispatchQueue.main.async {
+//                    if let wavURL = wavURL {
+//                        print("✅ Converted to WAV:", wavURL)
+//                        self.onSegmentSaved?(wavURL)
+//                    } else {
+//                        print("❌ Failed to convert segment to WAV")
+//                    }
+//
+//                    self.segmentIndex += 1
+//                }
+//            }
+//
+//        } catch {
+//            print("❌ Failed to write segment: \(error)")
+//        }
+//    }
 
 
     // You might need to change this to an async function
@@ -188,6 +234,24 @@ final class AudioRecorderService: ObservableObject {
         mixerNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { [weak self] buffer, _ in
             guard let self = self else { return }
             guard let currentBuffer = self.currentRecordingBuffer else { return }
+
+            // --- Audio Level Calculation ---
+            let channelCount = Int(buffer.format.channelCount)
+            var rms: Float = 0.0
+            if let channelData = buffer.floatChannelData {
+                for channel in 0..<channelCount {
+                    let data = channelData[channel]
+                    let frames = Int(buffer.frameLength)
+                    let sum = vDSP.sum(vDSP.square(Array(UnsafeBufferPointer(start: data, count: frames))))
+                    rms += sum / Float(frames)
+                }
+                rms = sqrt(rms / Float(channelCount))
+            }
+            let level = min(max(rms * 10, 0), 1) // Normalize and clamp
+            DispatchQueue.main.async {
+                self.audioLevel = level
+            }
+            // --- End Audio Level Calculation ---
 
             let framesAvailable = currentBuffer.frameCapacity - currentBuffer.frameLength
             let framesToCopy = min(buffer.frameLength, framesAvailable)

@@ -11,14 +11,14 @@ import SwiftData
 @Model
 class RecordingSession {
     @Attribute(.unique) var id: UUID
-    var fileURL: URL
     var createdAt: Date
-    var duration: Int
+    var fileURL: URL
+    @Relationship(deleteRule: .cascade, inverse: \TranscriptionSegment.session)
+    var segments: [TranscriptionSegment] = []
 
-    init(fileURL: URL, duration: Int) {
+    init(fileURL: URL, createdAt: Date = .now) {
         self.id = UUID()
+        self.createdAt = createdAt
         self.fileURL = fileURL
-        self.createdAt = Date()
-        self.duration = duration
     }
 }

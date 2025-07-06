@@ -14,12 +14,14 @@ class TranscriptionSegment {
     var timestamp: Date
     var status: SegmentStatus
     var text: String?
+    @Relationship var session: RecordingSession?
 
-    init(timestamp: Date = .now, status: SegmentStatus = .pending, text: String? = nil) {
+    init(timestamp: Date = .now, status: SegmentStatus = .pending, text: String? = nil, session: RecordingSession? = nil) {
         self.id = UUID()
         self.timestamp = timestamp
         self.status = status
         self.text = text
+        self.session = session
     }
 }
 
