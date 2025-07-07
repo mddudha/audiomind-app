@@ -155,7 +155,7 @@ Sessions and segments are saved locally using SwiftData and shared with widgets 
 ## Demo
 
 Watch the full walkthrough video:
-[YouTube Demo](https://youtube.com/your-demo-link-here)
+[YouTube Demo](https://youtube.com/shorts/d8G3phNo_sc)
 
 ---
 
