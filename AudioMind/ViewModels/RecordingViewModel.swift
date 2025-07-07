@@ -37,8 +37,8 @@ final class RecordingViewModel: ObservableObject {
     private var timer: Timer?
     private var secondsElapsed = 0
     
-    private var currentSession: RecordingSession? // Track the current session
-    private var currentContext: ModelContext? // Store the context for segment creation
+    private var currentSession: RecordingSession?
+    private var currentContext: ModelContext?
     
     private var cancellables: Set<AnyCancellable> = []
     
@@ -46,14 +46,12 @@ final class RecordingViewModel: ObservableObject {
         !isRecording && UIApplication.shared.applicationState == .active
     }
     
-    // MARK: - Widget Communication
     private let widgetDataManager = WidgetDataManager.shared
 
     
     init() {
         recorder = AudioRecorderService()
 
-        // Handle 30s audio segment
         recorder.onSegmentSaved = { [weak self] url in
             self?.handleSegmentSaved(at: url)
         }
@@ -68,7 +66,6 @@ final class RecordingViewModel: ObservableObject {
         recorder.$isRecording
             .receive(on: RunLoop.main)
             .assign(to: &$isRecording)
-        // Listen to audioLevel changes and update waveformLevels
         recorder.$audioLevel
             .receive(on: RunLoop.main)
             .sink { [weak self] level in
@@ -87,24 +84,19 @@ final class RecordingViewModel: ObservableObject {
 
     func handleSegmentSaved(at fileURL: URL) {
         guard let session = currentSession, let context = currentContext else { 
-            print("❌ Missing session or context for segment")
             return 
         }
         
-        // Create the segment and insert it into the context
         let segment = TranscriptionSegment(timestamp: Date(), status: .pending, text: nil, session: session)
         context.insert(segment)
         session.segments.append(segment)
-        
-        // Save the context immediately after creating the segment
+ 
         do { 
             try context.save() 
-            print("✅ Segment created and saved to context")
         } catch { 
-            print("❌ Error saving segment: \(error)") 
+            print("Error saving segment: \(error)")
         }
 
-        // Now transcribe the audio
         transcriptionService.transcribeAudio(at: fileURL) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -112,19 +104,15 @@ final class RecordingViewModel: ObservableObject {
                     segment.text = transcript
                     segment.status = .completed
                     self?.transcripts.append(transcript)
-                    print("✅ Transcribed and updated segment: \(transcript)")
                 case .failure(let error):
                     segment.status = .failed
-                    print("❌ Failed transcription: \(error.localizedDescription)")
                 }
                 
-                // Save context after updating the segment
                 if let context = self?.currentContext {
                     do { 
                         try context.save() 
-                        print("✅ Context saved after transcription")
                     } catch { 
-                        print("❌ Error saving context after transcription: \(error)") 
+                        print("Error saving context after transcription: \(error)")
                     }
                 }
             }
@@ -140,13 +128,11 @@ final class RecordingViewModel: ObservableObject {
 
         switch type {
         case .began:
-            print("📴 Interruption began")
             pauseRecording()
             pauseTimer()
             recordingState = .paused
 
         case .ended:
-            print("📲 Interruption ended")
             do {
                 try AVAudioSession.sharedInstance().setActive(true)
                 if shouldResumeAfterInterruption {
@@ -155,7 +141,6 @@ final class RecordingViewModel: ObservableObject {
                     recordingState = .recording
                 }
             } catch {
-                print("❌ Could not resume recording: \(error)")
                 self.error = "Failed to resume after interruption"
             }
 
@@ -173,7 +158,6 @@ final class RecordingViewModel: ObservableObject {
         do {
             try recorder.resumeRecording()
             startTimer()
-            print("▶️ Resumed recording after interruption")
         } catch {
             self.error = "Failed to resume recording: \(error.localizedDescription)"
         }
@@ -184,23 +168,21 @@ final class RecordingViewModel: ObservableObject {
         switch recordingState {
         case .notRecording:
             do {
-                secondsElapsed = 0 // Reset timer when starting new recording
+                secondsElapsed = 0
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyyMMdd-HHmmss"
                 let fileName = "Recording-\(dateFormatter.string(from: Date())).caf"
                 let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
                 let session = RecordingSession(fileURL: fileURL)
                 currentSession = session
-                currentContext = context // Store the context
+                currentContext = context
                 if let context = context {
                     context.insert(session)
-                    try context.save() // Save the session immediately
+                    try context.save()
                 }
                 try recorder.startRecording()
                 startTimer()
                 recordingState = .recording
-                
-                // Update widget
                 widgetDataManager.isRecording = true
                 widgetDataManager.refreshWidget()
             } catch {
@@ -223,34 +205,29 @@ final class RecordingViewModel: ObservableObject {
     }
 
     func stopRecording(context: ModelContext?) {
+        stopTimer()
         recorder.stopRecording()
         recordingState = .notRecording
-        
-        // Update widget
         widgetDataManager.isRecording = false
         updateWidgetSessionCount(context: context)
         widgetDataManager.refreshWidget()
         
         guard let context, let url = recorder.getRecordingURL(), let session = currentSession else {
-            print("Missing context, URL, or session")
-            stopTimer()
             return
         }
         
         session.fileURL = url
         do {
             try context.save()
-            print("✅ Recording saved to SwiftData")
         } catch {
             print("❌ Error saving session: \(error)")
         }
-        stopTimer()
         currentSession = nil
-        currentContext = nil // Clear context when recording stops
+        currentContext = nil
     }
     
     private func startTimer() {
-        secondsElapsed = 0 // Always reset timer when starting
+        secondsElapsed = 0
         updateTimerText()
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -273,7 +250,6 @@ final class RecordingViewModel: ObservableObject {
         timerText = String(format: "%02d:%02d", minutes, seconds)
     }
     
-    // MARK: - Widget Helper Methods
     private func updateWidgetSessionCount(context: ModelContext?) {
         guard let context = context else { return }
         
@@ -282,7 +258,7 @@ final class RecordingViewModel: ObservableObject {
             let sessions = try context.fetch(descriptor)
             widgetDataManager.updateSessionCount(sessions.count)
         } catch {
-            print("❌ Error fetching session count for widget: \(error)")
+            print("Error fetching session count for widget: \(error)")
         }
     }
     

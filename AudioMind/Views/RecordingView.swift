@@ -21,13 +21,11 @@ struct RecordingView: View {
                 Color("MossGreen").ignoresSafeArea()
                 VStack(spacing: 32) {
                     Spacer(minLength: 24)
-                    // Timer at the top
                     Text(viewModel.timerText)
                         .font(.system(size: 60, weight: .bold, design: .monospaced))
                         .foregroundColor(Color("DarkGreen"))
                         .padding(.top, 16)
 
-                    // Audio Level Meter in the center
                     if viewModel.isRecording {
                         AudioLevelMeterView(levels: viewModel.waveformLevels)
                             .frame(height: 60)
@@ -38,7 +36,6 @@ struct RecordingView: View {
                         Spacer().frame(height: 60)
                     }
 
-                    // Recording Controls
                     Button(action: {
                         if viewModel.isRecording {
                             viewModel.stopRecording(context: context)
@@ -58,7 +55,6 @@ struct RecordingView: View {
                     }
                     .padding(.vertical, 8)
 
-                    // Session List
                     sessionListCard
                     Spacer()
                 }

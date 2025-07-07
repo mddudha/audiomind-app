@@ -16,7 +16,7 @@ final class AudioRecorderService: ObservableObject {
     private var outputURL: URL?
 
     private var currentRecordingBuffer: AVAudioPCMBuffer?
-    private var accumulatedFrames: AVAudioFramePosition = 0 // To keep track of total frames for the segment
+    private var accumulatedFrames: AVAudioFramePosition = 0
     private var chunkTimer: Timer?
     private var segmentIndex = 0
     var onSegmentSaved: ((URL) -> Void)?
@@ -24,7 +24,7 @@ final class AudioRecorderService: ObservableObject {
     private let transcriptionService = TranscriptionService()
 
     @Published var isRecording = false
-    @Published var audioLevel: Float = 0.0 // 0.0 (silent) to 1.0 (max)
+    @Published var audioLevel: Float = 0.0
     
     private var format: AVAudioFormat {
         engine.inputNode.inputFormat(forBus: 0)
@@ -37,13 +37,6 @@ final class AudioRecorderService: ObservableObject {
             name: AVAudioSession.routeChangeNotification,
             object: nil
         )
-
-//        NotificationCenter.default.addObserver(
-//            self,
-//            selector: #selector(handleInterruption),
-//            name: AVAudioSession.interruptionNotification,
-//            object: nil
-//        )
     }
 
     @objc private func handleRouteChange(notification: Notification) {
@@ -53,10 +46,9 @@ final class AudioRecorderService: ObservableObject {
 
         switch reason {
         case .oldDeviceUnavailable:
-            print("🎧 Headphones unplugged")
             stopRecording()
         case .newDeviceAvailable:
-            print("🎧 New audio device connected")
+            break
         default:
             break
         }
@@ -66,7 +58,6 @@ final class AudioRecorderService: ObservableObject {
         chunkTimer?.invalidate()
 
         chunkTimer = Timer(timeInterval: 30.0, repeats: true) { [weak self] _ in
-            print("⏱ Timer fired!")
             self?.flushSegmentToDisk()
         }
 
@@ -76,13 +67,8 @@ final class AudioRecorderService: ObservableObject {
     }
 
 
-    // In AudioRecorderService.swift
-
     private func flushSegmentToDisk() {
-        print("🧾 Flushing accumulated frames: \(accumulatedFrames)")
-
         guard let bufferToFlush = currentRecordingBuffer, bufferToFlush.frameLength > 0 else {
-            print("No frames to flush.")
             return
         }
 
@@ -92,23 +78,19 @@ final class AudioRecorderService: ObservableObject {
         do {
             let file = try AVAudioFile(forWriting: segmentURL, settings: bufferToFlush.format.settings)
             try file.write(from: bufferToFlush)
-            print("✅ Segment saved: \(segmentFilename)")
 
-            // Reset the buffer for the next segment *after* writing
+            
             bufferToFlush.frameLength = 0
             accumulatedFrames = 0
 
-            // Perform WAV conversion
             convertToWav(sourceURL: segmentURL) { [weak self] wavURL in
                 guard let self = self else { return }
 
-                DispatchQueue.main.async { // Ensure UI updates or subsequent calls are on main thread if needed
+                DispatchQueue.main.async {
                     if let wavURL = wavURL {
-                        print("✅ Converted to WAV:", wavURL)
-                        // Call the callback to let the ViewModel handle segment creation and transcription
                         self.onSegmentSaved?(wavURL)
                     } else {
-                        print("❌ Failed to convert segment to WAV")
+                        print("Failed to convert segment to WAV")
                     }
 
                     self.segmentIndex += 1
@@ -116,63 +98,14 @@ final class AudioRecorderService: ObservableObject {
             }
 
         } catch {
-            print("❌ Failed to write segment: \(error)")
+            print("Failed to write segment: \(error)")
         }
     }
     
-//
-//    private func flushSegmentToDisk() {
-//        print("🧾 Flushing accumulated frames: \(accumulatedFrames)") // Changed from bufferQueue.count
-//
-//        guard let bufferToFlush = currentRecordingBuffer, bufferToFlush.frameLength > 0 else {
-//            print("No frames to flush.")
-//            return
-//        }
-//
-//        let segmentFilename = "segment_\(segmentIndex).caf"
-//        let segmentURL = FileManager.default.temporaryDirectory.appendingPathComponent(segmentFilename)
-//
-//        do {
-//            // Use the format from the buffer itself
-//            let file = try AVAudioFile(forWriting: segmentURL, settings: bufferToFlush.format.settings)
-//
-//            try file.write(from: bufferToFlush) // Write the single accumulated buffer
-//
-//            print("✅ Segment saved: \(segmentFilename)")
-//
-//            // Reset the buffer for the next segment *after* writing
-//            bufferToFlush.frameLength = 0
-//            accumulatedFrames = 0
-//
-//            // Perform WAV conversion
-//            convertToWav(sourceURL: segmentURL) { [weak self] wavURL in
-//                guard let self = self else { return }
-//
-//                DispatchQueue.main.async {
-//                    if let wavURL = wavURL {
-//                        print("✅ Converted to WAV:", wavURL)
-//                        self.onSegmentSaved?(wavURL)
-//                    } else {
-//                        print("❌ Failed to convert segment to WAV")
-//                    }
-//
-//                    self.segmentIndex += 1
-//                }
-//            }
-//
-//        } catch {
-//            print("❌ Failed to write segment: \(error)")
-//        }
-//    }
-
-
-    // You might need to change this to an async function
-    // or call it within a Task {} block from your existing completion handler
     private func convertToWav(sourceURL: URL, completion: @escaping (URL?) -> Void) {
-        Task { // Wrap the async code in a Task
+        Task {
             let asset = AVURLAsset(url: sourceURL)
             guard let exporter = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else {
-                print("❌ Could not create export session")
                 completion(nil)
                 return
             }
@@ -182,11 +115,9 @@ final class AudioRecorderService: ObservableObject {
             exporter.outputFileType = .wav
 
             do {
-                try await exporter.export() // Use the new async export method
-                print("✅ Converted to WAV:", outputURL)
+                try await exporter.export()
                 completion(outputURL)
             } catch {
-                print("❌ Failed to convert:", error.localizedDescription) // Use .localizedDescription or toError()
                 completion(nil)
             }
         }
@@ -195,12 +126,10 @@ final class AudioRecorderService: ObservableObject {
     
     func pauseRecording() {
         engine.pause()
-        print("⏸ Audio engine paused")
     }
 
     func resumeRecording() throws {
         try engine.start()
-        print("▶️ Audio engine resumed")
     }
 
 
@@ -216,13 +145,10 @@ final class AudioRecorderService: ObservableObject {
         engine.connect(engine.inputNode, to: mixerNode, format: nil)
 
         let inputFormat = engine.inputNode.outputFormat(forBus: 0)
-
-        // Calculate capacity for 30 seconds of audio + small buffer
         let secondsPerSegment: Double = 30.0
         let sampleRate = inputFormat.sampleRate
         let framesPerSegment = AVAudioFrameCount(sampleRate * secondsPerSegment) + inputFormat.channelCount * 1024
 
-        // Initialize the accumulating buffer
         currentRecordingBuffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: framesPerSegment)
         guard let currentRecordingBuffer = currentRecordingBuffer else {
             throw NSError(domain: "AudioRecordingError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to create recording buffer."])
@@ -235,7 +161,7 @@ final class AudioRecorderService: ObservableObject {
             guard let self = self else { return }
             guard let currentBuffer = self.currentRecordingBuffer else { return }
 
-            // --- Audio Level Calculation ---
+      
             let channelCount = Int(buffer.format.channelCount)
             var rms: Float = 0.0
             if let channelData = buffer.floatChannelData {
@@ -247,20 +173,17 @@ final class AudioRecorderService: ObservableObject {
                 }
                 rms = sqrt(rms / Float(channelCount))
             }
-            let level = min(max(rms * 10, 0), 1) // Normalize and clamp
+            let level = min(max(rms * 10, 0), 1)
             DispatchQueue.main.async {
                 self.audioLevel = level
             }
-            // --- End Audio Level Calculation ---
 
             let framesAvailable = currentBuffer.frameCapacity - currentBuffer.frameLength
             let framesToCopy = min(buffer.frameLength, framesAvailable)
 
             if framesToCopy > 0 {
-                // Manual float32 channel-wise copying
                 guard let srcChannelData = buffer.floatChannelData,
                       let dstChannelData = currentBuffer.floatChannelData else {
-                    print("❌ Unsupported buffer format for copying")
                     return
                 }
 
@@ -275,10 +198,7 @@ final class AudioRecorderService: ObservableObject {
                 currentBuffer.frameLength += framesToCopy
                 self.accumulatedFrames += AVAudioFramePosition(framesToCopy)
 
-                print("🎙 Appended \(framesToCopy) frames, total: \(currentBuffer.frameLength)")
-
             } else {
-                print("⚠️ Current recording buffer full! Flushing early.")
                 self.flushSegmentToDisk()
             }
         }
@@ -291,14 +211,13 @@ final class AudioRecorderService: ObservableObject {
 
     func stopRecording() {
         chunkTimer?.invalidate()
-        flushSegmentToDisk() // Flush any remaining data
+        flushSegmentToDisk()
 
         engine?.stop()
         mixerNode?.removeTap(onBus: 0)
         
-        // Clear the buffer and reset frames on stop
         currentRecordingBuffer?.frameLength = 0
-        currentRecordingBuffer = nil // Release the buffer
+        currentRecordingBuffer = nil 
         accumulatedFrames = 0
         
         isRecording = false

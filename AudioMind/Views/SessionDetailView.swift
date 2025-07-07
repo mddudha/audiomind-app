@@ -1,5 +1,13 @@
+//
+//  SessionDetailView.swift
+//  AudioMind
+//
+//  Created by Mirvaben Dudhagara on 7/2/25.
+//
+
 import SwiftUI
 import SwiftData
+import os
 
 struct SessionDetailView: View, Identifiable {
     let id = UUID()
@@ -43,8 +51,6 @@ struct SessionDetailQueryView: View {
                 .onAppear {
                     let transcript = fullTranscript(for: session)
                     let segmentCount = session.segments.count
-                    print("🔍 SessionDetailView - Segments loaded: \(segmentCount)")
-                    print("🔍 SessionDetailView - Transcript length: \(transcript.count)")
                 }
 
                 Spacer()

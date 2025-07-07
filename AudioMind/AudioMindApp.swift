@@ -22,11 +22,10 @@ struct AudioMindApp: App {
             TranscriptionSegment.self
         ])
         
-        // Configure for App Groups to share data with widget
         let modelConfiguration = ModelConfiguration(
             schema: schema, 
             isStoredInMemoryOnly: false,
-            groupContainer: .identifier("group.com.mirva.AudioMind") // Your App Group ID
+            groupContainer: .identifier("group.com.mirva.AudioMind")
         )
 
         do {
@@ -52,10 +51,8 @@ struct AudioMindApp: App {
         let action = url.host ?? ""
         switch action {
         case "start":
-            // Start recording - this will be handled by the RecordingView
             NotificationCenter.default.post(name: .startRecording, object: nil)
         case "stop":
-            // Stop recording - this will be handled by the RecordingView
             NotificationCenter.default.post(name: .stopRecording, object: nil)
         default:
             break

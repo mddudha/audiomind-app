@@ -1,7 +1,14 @@
+//
+//  AudioLevelMeterView.swift
+//  AudioMind
+//
+//  Created by Mirvaben Dudhagara on 7/2/25.
+//
+
 import SwiftUI
 
 struct AudioLevelMeterView: View {
-    var levels: [Float] // Array of recent audio levels, 0.0...1.0
+    var levels: [Float]
     
     var body: some View {
         GeometryReader { geo in
@@ -28,7 +35,6 @@ struct AudioLevelMeterView: View {
     }
 }
 
-// Preview with a sine wave
 #Preview {
     let N = 50
     let sine: [Float] = (0..<N).map { i in
