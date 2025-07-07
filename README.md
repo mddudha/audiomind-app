@@ -203,7 +203,6 @@ This project is licensed under the [MIT License](LICENSE).
 ## Author
 
 Developed by **Mirvaben Dudhagara**
-[LinkedIn](https://www.linkedin.com/in/mirva-dudhagara)
-
+[LinkedIn](https://www.linkedin.com/in/mirva-dudhagara/)
 ```
 ```
