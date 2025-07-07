@@ -1,22 +1,27 @@
-
 # AudioMind
 
 **AudioMind** is a production-ready iOS application that records audio, splits it into 30-second segments, and transcribes each segment using a Python FastAPI backend powered by Faster-Whisper. It supports background recording, robust audio session handling, waveform visualization, and persistent storage using SwiftData. AudioMind is optimized for real-world recording scenarios such as interruptions, route changes, and offline recovery.
+
+> 📌 **Note:** The latest working version of the project is available on the `submit-mvp` branch.  
+> Please switch to that branch after cloning:
+
+```bash
+git checkout submit-mvp
+````
 
 ---
 
 ## Features
 
-- Audio recording using AVAudioEngine
-- 30-second automatic segmentation of audio streams
-- Real-time waveform visualization during recording
-- Transcription integration via a FastAPI backend using Faster-Whisper
-- SwiftData-based storage of recording sessions and transcript segments
-- Background recording support with audio and fetch entitlements
-- Route change and audio interruption recovery
-- VoiceOver accessibility labels and VoiceOver-ready controls
-- Home screen widget to start/stop recording
-- Error handling for permission denials, route changes, network failures, and more
+* Audio recording using AVAudioEngine
+* 30-second automatic segmentation of audio streams
+* Real-time waveform visualization during recording
+* Transcription integration via a FastAPI backend using Faster-Whisper
+* SwiftData-based storage of recording sessions and transcript segments
+* Background recording support with audio and fetch entitlements
+* Route change and audio interruption recovery
+* VoiceOver accessibility labels and VoiceOver-ready controls
+* Home screen widget to start/stop recording
 
 ---
 
@@ -30,16 +35,17 @@ This guide includes setup instructions for both the **iOS app** and the **transc
 
 ### Prerequisites
 
-- macOS 13.5+ and Xcode 15+
-- Physical iOS device (required for background audio)
-- Microphone access permission
+* macOS 13.5+ and Xcode 15+
+* Physical iOS device (required for background audio)
+* Microphone access permission
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/AudioMind.git
+git clone https://github.com/mddudha/AudioMind.git
 cd AudioMind
-````
+git checkout submit-mvp
+```
 
 ### 2. Open the Project
 
@@ -203,6 +209,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Author
 
 Developed by **Mirvaben Dudhagara**
-[LinkedIn](https://www.linkedin.com/in/mirva-dudhagara/)
+[LinkedIn](https://www.linkedin.com/in/mirva-dudhagara)
+
 ```
 ```
