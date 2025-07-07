@@ -1,4 +1,4 @@
-````markdown
+
 # AudioMind
 
 **AudioMind** is a production-ready iOS application that records audio, splits it into 30-second segments, and transcribes each segment using a Python FastAPI backend powered by Faster-Whisper. It supports background recording, robust audio session handling, waveform visualization, and persistent storage using SwiftData. AudioMind is optimized for real-world recording scenarios such as interruptions, route changes, and offline recovery.
