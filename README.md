@@ -149,7 +149,7 @@ Sessions and segments are saved locally using SwiftData and shared with widgets 
 
 | Recording Screen                             | Waveform Meter                             | Session History                            | Widget                                 |
 | -------------------------------------------- | ------------------------------------------ | ------------------------------------------ | -------------------------------------- |
-| ![Recording](docs/screenshots/recording.png) | ![Transcript](docs/screenshots/waveform.png) | ![Widget](docs/screenshots/widget.png) |
+| ![Recording](https://github.com/mddudha/audiomind-app/blob/submit-mvp/1.PNG) | ![Transcript](https://github.com/mddudha/audiomind-app/blob/submit-mvp/2.PNG) | ![Widget](https://github.com/mddudha/audiomind-app/blob/submit-mvp/3.PNG) |
 
 > Place screenshots in the `docs/screenshots/` folder.
 
